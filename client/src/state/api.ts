@@ -289,6 +289,33 @@ export const api = createApi({
       },
     }),
 
+    uploadLeaseAgreement: build.mutation<
+      { id: number; agreementUrl: string },
+      { leaseId: number; file: File }
+    >({
+      query: ({ leaseId, file }) => {
+        const body = new FormData();
+        body.append("agreement", file);
+        return { url: `leases/${leaseId}/agreement`, method: "POST", body };
+      },
+      invalidatesTags: ["Leases"],
+      async onQueryStarted(_, { queryFulfilled }) {
+        await withToast(queryFulfilled, {
+          success: "Agreement uploaded.",
+          error: "Failed to upload agreement.",
+        });
+      },
+    }),
+
+    getLeaseAgreementUrl: build.mutation<{ downloadUrl: string }, number>({
+      query: (leaseId) => `leases/${leaseId}/agreement`,
+      async onQueryStarted(_, { queryFulfilled }) {
+        await withToast(queryFulfilled, {
+          error: "No agreement available for this lease yet.",
+        });
+      },
+    }),
+
     getPropertyLeases: build.query<Lease[], number>({
       query: (propertyId) => `properties/${propertyId}/leases`,
       providesTags: ["Leases"],
@@ -383,6 +410,8 @@ export const {
   useRemoveFavoritePropertyMutation,
   useGetLeasesQuery,
   useGetPropertyLeasesQuery,
+  useUploadLeaseAgreementMutation,
+  useGetLeaseAgreementUrlMutation,
   useGetPaymentsQuery,
   useGetApplicationsQuery,
   useUpdateApplicationStatusMutation,

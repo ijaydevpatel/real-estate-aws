@@ -158,6 +158,8 @@ model Lease {
   propertyId      Int
   tenantCognitoId String
 
+  agreementUrl    String?
+
   property    Property     @relation(fields: [propertyId], references: [id])
   tenant      Tenant       @relation(fields: [tenantCognitoId], references: [cognitoId])
   application Application?

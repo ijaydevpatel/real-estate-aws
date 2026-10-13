@@ -15,11 +15,12 @@ import {
   useGetPropertyLeasesQuery,
   useGetPropertyQuery,
 } from "@/state/api";
-import { ArrowDownToLine, ArrowLeft, Check, Download } from "lucide-react";
+import { ArrowLeft, Check, Download } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import React from "react";
+import LeaseAgreementActions from "@/components/LeaseAgreementActions";
 
 const PropertyTenants = () => {
   const { id } = useParams();
@@ -139,13 +140,11 @@ const PropertyTenants = () => {
                     </TableCell>
                     <TableCell>{lease.tenant.phoneNumber}</TableCell>
                     <TableCell>
-                      <button
-                        className={`border border-gray-300 text-gray-700 py-2 px-4 rounded-md flex 
-                      items-center justify-center font-semibold hover:bg-primary-700 hover:text-primary-50`}
-                      >
-                        <ArrowDownToLine className="w-4 h-4 mr-1" />
-                        Download Agreement
-                      </button>
+                      <LeaseAgreementActions
+                        leaseId={lease.id}
+                        canUpload
+                        compact
+                      />
                     </TableCell>
                   </TableRow>
                 ))}

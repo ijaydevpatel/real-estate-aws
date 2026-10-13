@@ -9,9 +9,10 @@ import {
   useGetAuthUserQuery,
   useUpdateApplicationStatusMutation,
 } from "@/state/api";
-import { CircleCheckBig, Download, File, Hospital } from "lucide-react";
+import { CircleCheckBig, File, Hospital } from "lucide-react";
 import Link from "next/link";
 import React, { useState } from "react";
+import LeaseAgreementActions from "@/components/LeaseAgreementActions";
 
 const Applications = () => {
   const { data: authUser } = useGetAuthUserQuery();
@@ -126,13 +127,10 @@ const Applications = () => {
                         Property Details
                       </Link>
                       {application.status === "Approved" && (
-                        <button
-                          className={`bg-white border border-gray-300 text-gray-700 py-2 px-4
-                          rounded-md flex items-center justify-center hover:bg-primary-700 hover:text-primary-50`}
-                        >
-                          <Download className="w-5 h-5 mr-2" />
-                          Download Agreement
-                        </button>
+                        <LeaseAgreementActions
+                          leaseId={application.leaseId}
+                          canUpload
+                        />
                       )}
                       {application.status === "Pending" && (
                         <>

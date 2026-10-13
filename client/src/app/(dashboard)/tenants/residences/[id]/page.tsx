@@ -29,6 +29,7 @@ import {
 } from "lucide-react";
 import { useParams } from "next/navigation";
 import React from "react";
+import LeaseAgreementActions from "@/components/LeaseAgreementActions";
 
 const PaymentMethod = () => {
   return (
@@ -141,10 +142,7 @@ const ResidenceCard = ({
           <User className="w-5 h-5 mr-2" />
           Manager
         </button>
-        <button className="bg-white border border-gray-300 text-gray-700 py-2 px-4 rounded-md flex items-center justify-center hover:bg-primary-700 hover:text-primary-50">
-          <Download className="w-5 h-5 mr-2" />
-          Download Agreement
-        </button>
+        <LeaseAgreementActions leaseId={currentLease.id} />
       </div>
     </div>
   );

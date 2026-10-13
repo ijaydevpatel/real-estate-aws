@@ -4,8 +4,9 @@ import ApplicationCard from "@/components/ApplicationCard";
 import Header from "@/components/Header";
 import Loading from "@/components/Loading";
 import { useGetApplicationsQuery, useGetAuthUserQuery } from "@/state/api";
-import { CircleCheckBig, Clock, Download, XCircle } from "lucide-react";
+import { CircleCheckBig, Clock, XCircle } from "lucide-react";
 import React from "react";
+import LeaseAgreementActions from "@/components/LeaseAgreementActions";
 
 const Applications = () => {
   const { data: authUser } = useGetAuthUserQuery();
@@ -53,13 +54,7 @@ const Applications = () => {
                 </div>
               )}
 
-              <button
-                className={`bg-white border border-gray-300 text-gray-700 py-2 px-4
-                          rounded-md flex items-center justify-center hover:bg-primary-700 hover:text-primary-50`}
-              >
-                <Download className="w-5 h-5 mr-2" />
-                Download Agreement
-              </button>
+              <LeaseAgreementActions leaseId={application.leaseId} />
             </div>
           </ApplicationCard>
         ))}
