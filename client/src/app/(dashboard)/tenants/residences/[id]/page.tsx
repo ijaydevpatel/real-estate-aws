@@ -27,7 +27,7 @@ import {
   User,
 } from "lucide-react";
 import { useParams } from "next/navigation";
-import React from "react";
+import React, { useState } from "react";
 import LeaseAgreementActions from "@/components/LeaseAgreementActions";
 import PaymentMethodCard from "@/components/PaymentMethodCard";
 import { saveBlob } from "@/lib/download";
@@ -41,6 +41,13 @@ const ResidenceCard = ({
   property: Property;
   currentLease: Lease;
 }) => {
+  const [showManager, setShowManager] = useState(false);
+  const manager = (
+    property as unknown as {
+      manager?: { name: string; email: string; phoneNumber: string };
+    }
+  ).manager;
+
   return (
     <div className="bg-white rounded-xl shadow-md overflow-hidden p-6 flex-1 flex flex-col justify-between">
       {/* Header */}
@@ -103,7 +110,10 @@ const ResidenceCard = ({
       </div>
       {/* Buttons */}
       <div className="flex justify-end gap-2 w-full">
-        <button className="bg-white border border-gray-300 text-gray-700 py-2 px-4 rounded-md flex items-center justify-center hover:bg-primary-700 hover:text-primary-50">
+        <button
+          onClick={() => setShowManager((v) => !v)}
+          className="bg-white border border-gray-300 text-gray-700 py-2 px-4 rounded-md flex items-center justify-center hover:bg-primary-700 hover:text-primary-50"
+        >
           <User className="w-5 h-5 mr-2" />
           Manager
         </button>
@@ -113,6 +123,22 @@ const ResidenceCard = ({
           canUpload
         />
       </div>
+
+      {showManager && (
+        <div className="mt-4 border-t pt-4 text-sm">
+          {manager ? (
+            <>
+              <p className="font-semibold mb-1">{manager.name}</p>
+              <p className="text-gray-600">{manager.email}</p>
+              <p className="text-gray-600">
+                {manager.phoneNumber || "No phone on file"}
+              </p>
+            </>
+          ) : (
+            <p className="text-gray-500">Manager details unavailable.</p>
+          )}
+        </div>
+      )}
     </div>
   );
 };
@@ -243,17 +269,18 @@ const Residence = () => {
     parseInt(authUser?.cognitoInfo?.userId || "0"),
     { skip: !authUser?.cognitoInfo?.userId }
   );
+  // The lease for THIS property, not whichever lease happens to be first.
+  const currentLease = leases?.find(
+    (lease) => lease.propertyId === Number(id)
+  );
+
   const { data: payments, isLoading: paymentsLoading } = useGetPaymentsQuery(
-    leases?.[0]?.id || 0,
-    { skip: !leases?.[0]?.id }
+    currentLease?.id || 0,
+    { skip: !currentLease?.id }
   );
 
   if (propertyLoading || leasesLoading || paymentsLoading) return <Loading />;
   if (!property || propertyError) return <div>Error loading property</div>;
-
-  const currentLease = leases?.find(
-    (lease) => lease.propertyId === property.id
-  );
 
   return (
     <div className="dashboard-container">
@@ -266,10 +293,16 @@ const Residence = () => {
             cognitoId={authUser?.cognitoInfo?.userId || ""}
           />
         </div>
-        <BillingHistory
-          payments={payments || []}
-          leaseId={currentLease.id}
-        />
+        {currentLease ? (
+          <BillingHistory
+            payments={payments || []}
+            leaseId={currentLease.id}
+          />
+        ) : (
+          <p className="mt-8 text-gray-500">
+            You do not have a lease on this property.
+          </p>
+        )}
       </div>
     </div>
   );

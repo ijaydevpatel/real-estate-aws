@@ -166,6 +166,9 @@ export const getProperty = async (
       where: { id: Number(id) },
       include: {
         location: true,
+        manager: {
+          select: { name: true, email: true, phoneNumber: true },
+        },
       },
     });
 
