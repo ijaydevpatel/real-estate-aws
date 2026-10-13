@@ -69,6 +69,24 @@ declare global {
     propertyId: number;
   }
 
+  interface PaymentMethodRecord {
+    id: number;
+    tenantCognitoId: string;
+    cardBrand: string;
+    last4: string;
+    expiryMonth: number;
+    expiryYear: number;
+    billingEmail: string;
+  }
+
+  interface PaymentMethodInput {
+    cardBrand: string;
+    last4: string;
+    expiryMonth: number;
+    expiryYear: number;
+    billingEmail: string;
+  }
+
   interface ContactWidgetProps {
     onOpenModal: () => void;
     propertyId: number;

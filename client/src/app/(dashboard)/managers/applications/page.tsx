@@ -129,7 +129,6 @@ const Applications = () => {
                       {application.status === "Approved" && (
                         <LeaseAgreementActions
                           leaseId={application.leaseId}
-                          canUpload
                         />
                       )}
                       {application.status === "Pending" && (

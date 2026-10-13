@@ -14,68 +14,25 @@ import {
   useGetLeasesQuery,
   useGetPaymentsQuery,
   useGetPropertyQuery,
+  useDownloadReceiptMutation,
+  useDownloadAllReceiptsMutation,
 } from "@/state/api";
 import { Lease, Payment, Property } from "@/types/prismaTypes";
 import {
   ArrowDownToLineIcon,
   Check,
-  CreditCard,
   Download,
-  Edit,
   FileText,
-  Mail,
   MapPin,
   User,
 } from "lucide-react";
 import { useParams } from "next/navigation";
 import React from "react";
 import LeaseAgreementActions from "@/components/LeaseAgreementActions";
+import PaymentMethodCard from "@/components/PaymentMethodCard";
+import { saveBlob } from "@/lib/download";
 import Image from "next/image";
 
-const PaymentMethod = () => {
-  return (
-    <div className="bg-white rounded-xl shadow-md overflow-hidden p-6 mt-10 md:mt-0 flex-1">
-      <h2 className="text-2xl font-bold mb-4">Payment method</h2>
-      <p className="mb-4">Change how you pay for your plan.</p>
-      <div className="border rounded-lg p-6">
-        <div>
-          {/* Card Info */}
-          <div className="flex gap-10">
-            <div className="w-36 h-20 bg-blue-600 flex items-center justify-center rounded-md">
-              <span className="text-white text-2xl font-bold">VISA</span>
-            </div>
-            <div className="flex flex-col justify-between">
-              <div>
-                <div className="flex items-start gap-5">
-                  <h3 className="text-lg font-semibold">Visa ending in 2024</h3>
-                  <span className="text-sm font-medium border border-primary-700 text-primary-700 px-3 py-1 rounded-full">
-                    Default
-                  </span>
-                </div>
-                <div className="text-sm text-gray-500 flex items-center">
-                  <CreditCard className="w-4 h-4 mr-1" />
-                  <span>Expiry • 26/06/2024</span>
-                </div>
-              </div>
-              <div className="text-sm text-gray-500 flex items-center">
-                <Mail className="w-4 h-4 mr-1" />
-                <span>billing@baseclub.com</span>
-              </div>
-            </div>
-          </div>
-
-          <hr className="my-4" />
-          <div className="flex justify-end">
-            <button className="bg-white border border-gray-300 text-gray-700 py-2 px-4 rounded-md flex items-center justify-center hover:bg-primary-700 hover:text-primary-50">
-              <Edit className="w-5 h-5 mr-2" />
-              <span>Edit</span>
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
 
 const ResidenceCard = ({
   property,
@@ -150,13 +107,46 @@ const ResidenceCard = ({
           <User className="w-5 h-5 mr-2" />
           Manager
         </button>
-        <LeaseAgreementActions leaseId={currentLease.id} canUpload />
+        <LeaseAgreementActions
+          leaseId={currentLease.id}
+          propertyId={property.id}
+          canUpload
+        />
       </div>
     </div>
   );
 };
 
-const BillingHistory = ({ payments }: { payments: Payment[] }) => {
+const BillingHistory = ({
+  payments,
+  leaseId,
+}: {
+  payments: Payment[];
+  leaseId: number;
+}) => {
+  const [downloadReceipt, { isLoading: isDownloadingOne }] =
+    useDownloadReceiptMutation();
+  const [downloadAll, { isLoading: isDownloadingAll }] =
+    useDownloadAllReceiptsMutation();
+
+  const handleOne = async (paymentId: number) => {
+    try {
+      const blob = await downloadReceipt({ leaseId, paymentId }).unwrap();
+      saveBlob(blob, `receipt-${paymentId}.pdf`);
+    } catch {
+      // the mutation surfaces its own toast
+    }
+  };
+
+  const handleAll = async () => {
+    try {
+      const blob = await downloadAll(leaseId).unwrap();
+      saveBlob(blob, `receipts-lease-${leaseId}.zip`);
+    } catch {
+      // the mutation surfaces its own toast
+    }
+  };
+
   return (
     <div className="mt-8 bg-white rounded-xl shadow-md overflow-hidden p-6">
       {/* Header */}
@@ -168,9 +158,13 @@ const BillingHistory = ({ payments }: { payments: Payment[] }) => {
           </p>
         </div>
         <div>
-          <button className="bg-white border border-gray-300 text-gray-700 py-2 px-4 rounded-md flex items-center justify-center hover:bg-primary-700 hover:text-primary-50">
+          <button
+            onClick={handleAll}
+            disabled={isDownloadingAll || payments.length === 0}
+            className="bg-white border border-gray-300 text-gray-700 py-2 px-4 rounded-md flex items-center justify-center hover:bg-primary-700 hover:text-primary-50 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
             <Download className="w-5 h-5 mr-2" />
-            <span>Download All</span>
+            <span>{isDownloadingAll ? "Preparing..." : "Download All"}</span>
           </button>
         </div>
       </div>
@@ -218,7 +212,11 @@ const BillingHistory = ({ payments }: { payments: Payment[] }) => {
                 </TableCell>
                 <TableCell>${payment.amountPaid.toFixed(2)}</TableCell>
                 <TableCell>
-                  <button className="border border-gray-300 text-gray-700 py-2 px-4 rounded-md flex items-center justify-center font-semibold hover:bg-primary-700 hover:text-primary-50">
+                  <button
+                    onClick={() => handleOne(payment.id)}
+                    disabled={isDownloadingOne}
+                    className="border border-gray-300 text-gray-700 py-2 px-4 rounded-md flex items-center justify-center font-semibold hover:bg-primary-700 hover:text-primary-50 disabled:opacity-50"
+                  >
                     <ArrowDownToLineIcon className="w-4 h-4 mr-1" />
                     Download
                   </button>
@@ -264,9 +262,14 @@ const Residence = () => {
           {currentLease && (
             <ResidenceCard property={property} currentLease={currentLease} />
           )}
-          <PaymentMethod />
+          <PaymentMethodCard
+            cognitoId={authUser?.cognitoInfo?.userId || ""}
+          />
         </div>
-        <BillingHistory payments={payments || []} />
+        <BillingHistory
+          payments={payments || []}
+          leaseId={currentLease.id}
+        />
       </div>
     </div>
   );

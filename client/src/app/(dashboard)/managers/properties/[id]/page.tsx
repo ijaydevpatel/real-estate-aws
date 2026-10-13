@@ -140,11 +140,7 @@ const PropertyTenants = () => {
                     </TableCell>
                     <TableCell>{lease.tenant.phoneNumber}</TableCell>
                     <TableCell>
-                      <LeaseAgreementActions
-                        leaseId={lease.id}
-                        canUpload
-                        compact
-                      />
+                      <LeaseAgreementActions leaseId={lease.id} compact />
                     </TableCell>
                   </TableRow>
                 ))}

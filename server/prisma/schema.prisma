@@ -119,6 +119,7 @@ model Tenant {
   favorites    Property[]    @relation("TenantFavorites")
   applications Application[]
   leases       Lease[]
+  paymentMethod PaymentMethod?
 }
 
 model Location {
@@ -165,6 +166,20 @@ model Lease {
   tenant      Tenant       @relation(fields: [tenantCognitoId], references: [cognitoId])
   application Application?
   payments    Payment[]
+}
+
+// Display details only. Never store a full card number or CVV - a real
+// deployment would hold a token from a PCI compliant provider instead.
+model PaymentMethod {
+  id              Int    @id @default(autoincrement())
+  tenantCognitoId String @unique
+  cardBrand       String
+  last4           String
+  expiryMonth     Int
+  expiryYear      Int
+  billingEmail    String
+
+  tenant Tenant @relation(fields: [tenantCognitoId], references: [cognitoId])
 }
 
 model Payment {

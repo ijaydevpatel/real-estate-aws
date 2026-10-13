@@ -28,6 +28,7 @@ export const api = createApi({
     "Managers",
     "Tenants",
     "Properties",
+    "PaymentMethod",
     "PropertyDetails",
     "Leases",
     "Payments",
@@ -289,6 +290,53 @@ export const api = createApi({
       },
     }),
 
+    getPaymentMethod: build.query<PaymentMethodRecord | null, string>({
+      query: (cognitoId) => `tenants/${cognitoId}/payment-method`,
+      providesTags: ["PaymentMethod"],
+    }),
+
+    updatePaymentMethod: build.mutation<
+      PaymentMethodRecord,
+      { cognitoId: string } & PaymentMethodInput
+    >({
+      query: ({ cognitoId, ...body }) => ({
+        url: `tenants/${cognitoId}/payment-method`,
+        method: "PUT",
+        body,
+      }),
+      invalidatesTags: ["PaymentMethod"],
+      async onQueryStarted(_, { queryFulfilled }) {
+        await withToast(queryFulfilled, {
+          success: "Payment method saved.",
+          error: "Failed to save payment method.",
+        });
+      },
+    }),
+
+    downloadReceipt: build.mutation<Blob, { leaseId: number; paymentId: number }>({
+      query: ({ leaseId, paymentId }) => ({
+        url: `leases/${leaseId}/payments/${paymentId}/receipt`,
+        responseHandler: (response) => response.blob(),
+      }),
+      async onQueryStarted(_, { queryFulfilled }) {
+        await withToast(queryFulfilled, {
+          error: "Failed to download receipt.",
+        });
+      },
+    }),
+
+    downloadAllReceipts: build.mutation<Blob, number>({
+      query: (leaseId) => ({
+        url: `leases/${leaseId}/receipts`,
+        responseHandler: (response) => response.blob(),
+      }),
+      async onQueryStarted(_, { queryFulfilled }) {
+        await withToast(queryFulfilled, {
+          error: "Failed to download receipts.",
+        });
+      },
+    }),
+
     getAgreementTemplateUrl: build.mutation<{ downloadUrl: string }, number>({
       query: (propertyId) => `properties/${propertyId}/agreement-template`,
       async onQueryStarted(_, { queryFulfilled }) {
@@ -422,6 +470,10 @@ export const {
   useUploadLeaseAgreementMutation,
   useGetLeaseAgreementUrlMutation,
   useGetAgreementTemplateUrlMutation,
+  useGetPaymentMethodQuery,
+  useUpdatePaymentMethodMutation,
+  useDownloadReceiptMutation,
+  useDownloadAllReceiptsMutation,
   useGetPaymentsQuery,
   useGetApplicationsQuery,
   useUpdateApplicationStatusMutation,

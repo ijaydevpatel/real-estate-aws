@@ -1,10 +1,11 @@
 "use client";
 
 import {
+  useGetAgreementTemplateUrlMutation,
   useGetLeaseAgreementUrlMutation,
   useUploadLeaseAgreementMutation,
 } from "@/state/api";
-import { Download, Upload } from "lucide-react";
+import { Download, FileText, Upload } from "lucide-react";
 import React, { useRef } from "react";
 
 const buttonClass =
@@ -12,15 +13,24 @@ const buttonClass =
 
 type Props = {
   leaseId?: number | null;
-  /** Managers also get an upload control. */
+  /** Tenants sign the agreement, so only they get the upload control. */
   canUpload?: boolean;
+  /** Supply to offer the blank template the manager attached to the listing. */
+  propertyId?: number | null;
   compact?: boolean;
 };
 
-const LeaseAgreementActions = ({ leaseId, canUpload, compact }: Props) => {
+const LeaseAgreementActions = ({
+  leaseId,
+  canUpload,
+  propertyId,
+  compact,
+}: Props) => {
   const fileInput = useRef<HTMLInputElement>(null);
   const [getUrl, { isLoading: isFetching }] = useGetLeaseAgreementUrlMutation();
   const [upload, { isLoading: isUploading }] = useUploadLeaseAgreementMutation();
+  const [getTemplate, { isLoading: isFetchingTemplate }] =
+    useGetAgreementTemplateUrlMutation();
 
   if (!leaseId) return null;
 
@@ -28,6 +38,16 @@ const LeaseAgreementActions = ({ leaseId, canUpload, compact }: Props) => {
     try {
       const { downloadUrl } = await getUrl(leaseId).unwrap();
       // Presigned link, valid for a few minutes.
+      window.open(downloadUrl, "_blank", "noopener,noreferrer");
+    } catch {
+      // the mutation surfaces its own toast
+    }
+  };
+
+  const handleTemplate = async () => {
+    if (!propertyId) return;
+    try {
+      const { downloadUrl } = await getTemplate(propertyId).unwrap();
       window.open(downloadUrl, "_blank", "noopener,noreferrer");
     } catch {
       // the mutation surfaces its own toast
@@ -49,7 +69,19 @@ const LeaseAgreementActions = ({ leaseId, canUpload, compact }: Props) => {
   const iconSize = compact ? "w-4 h-4 mr-1" : "w-5 h-5 mr-2";
 
   return (
-    <div className="flex gap-2">
+    <div className="flex gap-2 flex-wrap">
+      {propertyId && (
+        <button
+          type="button"
+          onClick={handleTemplate}
+          disabled={isFetchingTemplate}
+          className={buttonClass}
+          title="The blank agreement supplied by the manager"
+        >
+          <FileText className={iconSize} />
+          {isFetchingTemplate ? "Opening..." : "Blank Agreement"}
+        </button>
+      )}
       <button
         type="button"
         onClick={handleDownload}
@@ -77,7 +109,7 @@ const LeaseAgreementActions = ({ leaseId, canUpload, compact }: Props) => {
             title="Upload a signed agreement for this lease"
           >
             <Upload className={iconSize} />
-            {isUploading ? "Uploading..." : "Upload"}
+            {isUploading ? "Uploading..." : "Upload Signed"}
           </button>
         </>
       )}

@@ -6,6 +6,8 @@ import {
   getLeasePayments,
   getLeases,
   uploadLeaseAgreement,
+  downloadPaymentReceipt,
+  downloadAllReceipts,
 } from "../controllers/leaseControllers";
 
 const upload = multer({ storage: multer.memoryStorage() });
@@ -28,6 +30,17 @@ router.post(
   authMiddleware(["manager", "tenant"]),
   upload.single("agreement"),
   uploadLeaseAgreement
+);
+
+router.get(
+  "/:id/receipts",
+  authMiddleware(["manager", "tenant"]),
+  downloadAllReceipts
+);
+router.get(
+  "/:id/payments/:paymentId/receipt",
+  authMiddleware(["manager", "tenant"]),
+  downloadPaymentReceipt
 );
 
 export default router;

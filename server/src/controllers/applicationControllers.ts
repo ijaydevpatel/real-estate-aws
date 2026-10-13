@@ -109,6 +109,21 @@ export const createApplication = async (
       return;
     }
 
+    // One application per tenant per property.
+    const existing = await prisma.application.findFirst({
+      where: { propertyId: Number(propertyId), tenantCognitoId },
+      select: { id: true, status: true },
+    });
+
+    if (existing) {
+      res.status(409).json({
+        message: `You have already applied for this property. That application is ${String(
+          existing.status
+        ).toLowerCase()}.`,
+      });
+      return;
+    }
+
     const newApplication = await prisma.$transaction(async (prisma) => {
       // Create lease first
       const lease = await prisma.lease.create({

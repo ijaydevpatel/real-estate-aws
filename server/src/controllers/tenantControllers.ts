@@ -183,3 +183,86 @@ export const removeFavoriteProperty = async (
       .json({ message: `Error removing favorite property: ${err.message}` });
   }
 };
+
+export const getPaymentMethod = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const cognitoId = req.params.cognitoId as string;
+    if (cognitoId !== req.user?.id) {
+      res.status(403).json({ message: "Not your payment method" });
+      return;
+    }
+
+    const paymentMethod = await prisma.paymentMethod.findUnique({
+      where: { tenantCognitoId: cognitoId },
+    });
+
+    // No card on file is a normal state, not an error.
+    res.status(200).json(paymentMethod ?? null);
+  } catch (error: any) {
+    console.error("getPaymentMethod failed:", error);
+    res
+      .status(500)
+      .json({ message: `Error retrieving payment method: ${error.message}` });
+  }
+};
+
+export const upsertPaymentMethod = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const cognitoId = req.params.cognitoId as string;
+    if (cognitoId !== req.user?.id) {
+      res.status(403).json({ message: "Not your payment method" });
+      return;
+    }
+
+    const { cardBrand, last4, expiryMonth, expiryYear, billingEmail } = req.body;
+
+    // Only the last four digits are ever accepted or stored.
+    const digits = String(last4 ?? "").replace(/\D/g, "").slice(-4);
+    if (digits.length !== 4) {
+      res.status(400).json({ message: "Enter the last 4 digits of the card" });
+      return;
+    }
+
+    const month = Number(expiryMonth);
+    const year = Number(expiryYear);
+    if (!(month >= 1 && month <= 12)) {
+      res.status(400).json({ message: "Expiry month must be between 1 and 12" });
+      return;
+    }
+    if (!(year >= 2024 && year <= 2100)) {
+      res.status(400).json({ message: "Enter a four digit expiry year" });
+      return;
+    }
+    if (!cardBrand || !billingEmail) {
+      res.status(400).json({ message: "Card brand and billing email are required" });
+      return;
+    }
+
+    const data = {
+      cardBrand: String(cardBrand),
+      last4: digits,
+      expiryMonth: month,
+      expiryYear: year,
+      billingEmail: String(billingEmail),
+    };
+
+    const paymentMethod = await prisma.paymentMethod.upsert({
+      where: { tenantCognitoId: cognitoId },
+      update: data,
+      create: { ...data, tenantCognitoId: cognitoId },
+    });
+
+    res.status(200).json(paymentMethod);
+  } catch (error: any) {
+    console.error("upsertPaymentMethod failed:", error);
+    res
+      .status(500)
+      .json({ message: `Error saving payment method: ${error.message}` });
+  }
+};
