@@ -289,6 +289,15 @@ export const api = createApi({
       },
     }),
 
+    getAgreementTemplateUrl: build.mutation<{ downloadUrl: string }, number>({
+      query: (propertyId) => `properties/${propertyId}/agreement-template`,
+      async onQueryStarted(_, { queryFulfilled }) {
+        await withToast(queryFulfilled, {
+          error: "This property has no agreement template.",
+        });
+      },
+    }),
+
     uploadLeaseAgreement: build.mutation<
       { id: number; agreementUrl: string },
       { leaseId: number; file: File }
@@ -412,6 +421,7 @@ export const {
   useGetPropertyLeasesQuery,
   useUploadLeaseAgreementMutation,
   useGetLeaseAgreementUrlMutation,
+  useGetAgreementTemplateUrlMutation,
   useGetPaymentsQuery,
   useGetApplicationsQuery,
   useUpdateApplicationStatusMutation,

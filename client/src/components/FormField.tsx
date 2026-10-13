@@ -46,7 +46,8 @@ interface FormFieldProps {
     | "password"
     | "file"
     | "multi-input"
-    | "multi-checkbox";
+    | "multi-checkbox"
+    | "document";
   placeholder?: string;
   options?: { value: string; label: string }[];
   accept?: string;
@@ -140,6 +141,15 @@ export const CustomFormField: React.FC<FormFieldProps> = ({
             allowMultiple={true}
             labelIdle={`Drag & Drop your images or <span class="filepond--label-action">Browse</span>`}
             credits={false}
+          />
+        );
+      case "document":
+        return (
+          <Input
+            type="file"
+            accept={accept}
+            onChange={(e) => field.onChange(e.target.files?.[0] ?? undefined)}
+            className={`border-gray-200 p-2 ${inputClassName}`}
           />
         );
       case "number":

@@ -4,6 +4,7 @@ import {
   getProperty,
   createProperty,
   deleteProperty,
+  getAgreementTemplateUrl,
 } from "../controllers/propertyControllers";
 import multer from "multer";
 import { authMiddleware } from "../middleware/authMiddleware";
@@ -16,6 +17,7 @@ const router = express.Router();
 
 router.get("/", getProperties);
 router.get("/:id", getProperty);
+router.get("/:id/agreement-template", getAgreementTemplateUrl);
 router.get(
   "/:id/leases",
   authMiddleware(["manager", "tenant"]),
@@ -24,7 +26,10 @@ router.get(
 router.post(
   "/",
   authMiddleware(["manager"]),
-  upload.array("photos"),
+  upload.fields([
+    { name: "photos" },
+    { name: "agreementTemplate", maxCount: 1 },
+  ]),
   createProperty
 );
 router.delete("/:id", authMiddleware(["manager"]), deleteProperty);

@@ -1,7 +1,13 @@
 import { Request, Response } from "express";
 import { PrismaClient, Prisma } from "@prisma/client";
 import { wktToGeoJSON } from "@terraformer/wkt";
-import { S3Client, DeleteObjectCommand } from "@aws-sdk/client-s3";
+import {
+  S3Client,
+  DeleteObjectCommand,
+  GetObjectCommand,
+  PutObjectCommand,
+} from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { Location } from "@prisma/client";
 import { Upload } from "@aws-sdk/lib-storage";
 import axios from "axios";
@@ -195,7 +201,11 @@ export const createProperty = async (
   res: Response
 ): Promise<void> => {
   try {
-    const files = req.files as Express.Multer.File[];
+    const uploaded = req.files as
+      | Record<string, Express.Multer.File[]>
+      | undefined;
+    const files = uploaded?.photos ?? [];
+    const templateFile = uploaded?.agreementTemplate?.[0];
     const {
       address,
       city,
@@ -223,6 +233,22 @@ export const createProperty = async (
         return uploadResult.Location;
       })
     );
+
+    let agreementTemplateUrl: string | null = null;
+    if (templateFile) {
+      const key = `agreement-templates/${Date.now()}-${
+        templateFile.originalname
+      }`;
+      await s3Client.send(
+        new PutObjectCommand({
+          Bucket: process.env.S3_BUCKET_NAME!,
+          Key: key,
+          Body: templateFile.buffer,
+          ContentType: templateFile.mimetype,
+        })
+      );
+      agreementTemplateUrl = key;
+    }
 
     const geocodingUrl = `https://nominatim.openstreetmap.org/search?${new URLSearchParams(
       {
@@ -270,6 +296,7 @@ export const createProperty = async (
             ? propertyData.highlights.split(",")
             : [],
         contactPhone: propertyData.contactPhone || null,
+        agreementTemplateUrl,
         languages:
           typeof propertyData.languages === "string"
             ? propertyData.languages
@@ -371,5 +398,47 @@ export const deleteProperty = async (
     res
       .status(500)
       .json({ message: `Error deleting property: ${error.message}` });
+  }
+};
+
+// Public: tenants need to read the terms before they apply, so this is not
+// behind auth. The object itself stays private and the link expires.
+export const getAgreementTemplateUrl = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const propertyId = Number(req.params.id);
+    const property = await prisma.property.findUnique({
+      where: { id: propertyId },
+      select: { agreementTemplateUrl: true },
+    });
+
+    if (!property) {
+      res.status(404).json({ message: "Property not found" });
+      return;
+    }
+    if (!property.agreementTemplateUrl) {
+      res
+        .status(404)
+        .json({ message: "No agreement template for this property" });
+      return;
+    }
+
+    const downloadUrl = await getSignedUrl(
+      s3Client,
+      new GetObjectCommand({
+        Bucket: process.env.S3_BUCKET_NAME!,
+        Key: property.agreementTemplateUrl,
+      }),
+      { expiresIn: 300 }
+    );
+
+    res.status(200).json({ downloadUrl });
+  } catch (error: any) {
+    console.error("getAgreementTemplateUrl failed:", error);
+    res
+      .status(500)
+      .json({ message: `Error fetching agreement template: ${error.message}` });
   }
 };

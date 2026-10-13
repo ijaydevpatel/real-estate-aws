@@ -38,6 +38,7 @@ const NewProperty = () => {
       postalCode: "",
       contactPhone: "",
       languages: "English",
+      agreementTemplate: undefined,
     },
   });
 
@@ -48,7 +49,11 @@ const NewProperty = () => {
 
     const formData = new FormData();
     Object.entries(data).forEach(([key, value]) => {
-      if (key === "photoUrls") {
+      if (value === undefined || value === null) {
+        return;
+      } else if (key === "agreementTemplate") {
+        formData.append("agreementTemplate", value as File);
+      } else if (key === "photoUrls") {
         const files = value as File[];
         files.forEach((file: File) => {
           formData.append("photos", file);
@@ -201,6 +206,17 @@ const NewProperty = () => {
                 type="file"
                 accept="image/*"
               />
+              <div className="mt-6">
+                <CustomFormField
+                  name="agreementTemplate"
+                  label="Tenancy Agreement Template (optional)"
+                  type="document"
+                  accept="application/pdf,.doc,.docx"
+                />
+                <p className="text-sm text-gray-500 mt-1">
+                  Tenants can read this before applying.
+                </p>
+              </div>
             </div>
 
             <hr className="my-6 border-gray-200" />

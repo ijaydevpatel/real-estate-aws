@@ -27,6 +27,7 @@ export const propertySchema = z.object({
     .string()
     .min(6, "Contact phone must be at least 6 digits"),
   languages: z.string().min(1, "Enter at least one language"),
+  agreementTemplate: z.instanceof(File).optional(),
 });
 
 export type PropertyFormData = z.infer<typeof propertySchema>;

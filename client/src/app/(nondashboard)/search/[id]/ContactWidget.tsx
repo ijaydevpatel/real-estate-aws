@@ -1,6 +1,10 @@
 import { Button } from "@/components/ui/button";
-import { useGetAuthUserQuery, useGetPropertyQuery } from "@/state/api";
-import { Phone } from "lucide-react";
+import {
+  useGetAgreementTemplateUrlMutation,
+  useGetAuthUserQuery,
+  useGetPropertyQuery,
+} from "@/state/api";
+import { FileText, Phone } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React from "react";
 
@@ -8,6 +12,8 @@ const ContactWidget = ({ onOpenModal, propertyId }: ContactWidgetProps) => {
   const { data: authUser } = useGetAuthUserQuery();
   const { data: property } = useGetPropertyQuery(propertyId);
   const router = useRouter();
+  const [getTemplate, { isLoading: isFetchingTemplate }] =
+    useGetAgreementTemplateUrlMutation();
 
   const handleButtonClick = () => {
     if (authUser) {
@@ -24,6 +30,20 @@ const ContactWidget = ({ onOpenModal, propertyId }: ContactWidgetProps) => {
     | { contactPhone?: string | null; languages?: string[] }
     | undefined;
   const contactPhone = contact?.contactPhone;
+  const hasTemplate = Boolean(
+    (property as { agreementTemplateUrl?: string | null } | undefined)
+      ?.agreementTemplateUrl
+  );
+
+  const handleViewAgreement = async () => {
+    try {
+      const { downloadUrl } = await getTemplate(propertyId).unwrap();
+      window.open(downloadUrl, "_blank", "noopener,noreferrer");
+    } catch {
+      // the mutation surfaces its own toast
+    }
+  };
+
   const languages = contact?.languages?.length
     ? contact.languages.join(", ")
     : null;
@@ -57,6 +77,18 @@ const ContactWidget = ({ onOpenModal, propertyId }: ContactWidgetProps) => {
       >
         {authUser ? "Submit Application" : "Sign In to Apply"}
       </Button>
+
+      {hasTemplate && (
+        <button
+          type="button"
+          onClick={handleViewAgreement}
+          disabled={isFetchingTemplate}
+          className="w-full mt-3 border border-primary-300 text-primary-800 rounded-md py-2 flex items-center justify-center gap-2 hover:bg-primary-50 disabled:opacity-50"
+        >
+          <FileText className="w-4 h-4" />
+          {isFetchingTemplate ? "Opening..." : "Read Tenancy Agreement"}
+        </button>
+      )}
 
       {languages && (
         <>
