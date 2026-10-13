@@ -25,7 +25,7 @@ router.get(
 );
 router.post(
   "/:id/agreement",
-  authMiddleware(["manager"]),
+  authMiddleware(["manager", "tenant"]),
   upload.single("agreement"),
   uploadLeaseAgreement
 );

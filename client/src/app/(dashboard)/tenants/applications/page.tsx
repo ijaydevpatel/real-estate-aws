@@ -54,7 +54,7 @@ const Applications = () => {
                 </div>
               )}
 
-              <LeaseAgreementActions leaseId={application.leaseId} />
+              <LeaseAgreementActions leaseId={application.leaseId} canUpload />
             </div>
           </ApplicationCard>
         ))}

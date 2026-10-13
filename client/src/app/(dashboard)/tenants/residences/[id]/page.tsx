@@ -30,6 +30,7 @@ import {
 import { useParams } from "next/navigation";
 import React from "react";
 import LeaseAgreementActions from "@/components/LeaseAgreementActions";
+import Image from "next/image";
 
 const PaymentMethod = () => {
   return (
@@ -87,7 +88,14 @@ const ResidenceCard = ({
     <div className="bg-white rounded-xl shadow-md overflow-hidden p-6 flex-1 flex flex-col justify-between">
       {/* Header */}
       <div className="flex gap-5">
-        <div className="w-64 h-32 object-cover bg-slate-500 rounded-xl"></div>
+        <div className="w-64 h-32 relative rounded-xl overflow-hidden bg-slate-200">
+          <Image
+            src={property.photoUrls?.[0] || "/placeholder.jpg"}
+            alt={property.name}
+            fill
+            className="object-cover"
+          />
+        </div>
 
         <div className="flex flex-col justify-between">
           <div>
@@ -105,7 +113,7 @@ const ResidenceCard = ({
           </div>
           <div className="text-xl font-bold">
             ${currentLease.rent}{" "}
-            <span className="text-gray-500 text-sm font-normal">/ night</span>
+            <span className="text-gray-500 text-sm font-normal">/ month</span>
           </div>
         </div>
       </div>
@@ -142,7 +150,7 @@ const ResidenceCard = ({
           <User className="w-5 h-5 mr-2" />
           Manager
         </button>
-        <LeaseAgreementActions leaseId={currentLease.id} />
+        <LeaseAgreementActions leaseId={currentLease.id} canUpload />
       </div>
     </div>
   );

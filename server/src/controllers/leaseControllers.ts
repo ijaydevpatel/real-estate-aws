@@ -94,10 +94,10 @@ export const uploadLeaseAgreement = async (
       res.status(404).json({ message: "Lease not found" });
       return;
     }
-    if (lease.property.managerCognitoId !== req.user?.id) {
-      res
-        .status(403)
-        .json({ message: "You do not manage the property for this lease" });
+    const isManager = lease.property.managerCognitoId === req.user?.id;
+    const isTenant = lease.tenantCognitoId === req.user?.id;
+    if (!isManager && !isTenant) {
+      res.status(403).json({ message: "Not your lease" });
       return;
     }
 
