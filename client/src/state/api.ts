@@ -261,6 +261,23 @@ export const api = createApi({
       },
     }),
 
+    deleteProperty: build.mutation<{ message: string; id: number }, number>({
+      query: (propertyId) => ({
+        url: `properties/${propertyId}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: (result, error, propertyId) => [
+        { type: "Properties", id: propertyId },
+        { type: "Properties", id: "LIST" },
+      ],
+      async onQueryStarted(_, { queryFulfilled }) {
+        await withToast(queryFulfilled, {
+          success: "Property deleted.",
+          error: "Failed to delete property.",
+        });
+      },
+    }),
+
     // lease related enpoints
     getLeases: build.query<Lease[], number>({
       query: () => "leases",
@@ -360,6 +377,7 @@ export const {
   useGetCurrentResidencesQuery,
   useGetManagerPropertiesQuery,
   useCreatePropertyMutation,
+  useDeletePropertyMutation,
   useGetTenantQuery,
   useAddFavoritePropertyMutation,
   useRemoveFavoritePropertyMutation,

@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { PrismaClient, Prisma } from "@prisma/client";
 import { wktToGeoJSON } from "@terraformer/wkt";
-import { S3Client } from "@aws-sdk/client-s3";
+import { S3Client, DeleteObjectCommand } from "@aws-sdk/client-s3";
 import { Location } from "@prisma/client";
 import { Upload } from "@aws-sdk/lib-storage";
 import axios from "axios";
@@ -289,5 +289,79 @@ export const createProperty = async (
     res
       .status(500)
       .json({ message: `Error creating property: ${err.message}` });
+  }
+};
+
+export const deleteProperty = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const propertyId = Number(req.params.id);
+    if (Number.isNaN(propertyId)) {
+      res.status(400).json({ message: "Invalid property id" });
+      return;
+    }
+
+    const property = await prisma.property.findUnique({
+      where: { id: propertyId },
+      select: {
+        id: true,
+        locationId: true,
+        photoUrls: true,
+        managerCognitoId: true,
+      },
+    });
+
+    if (!property) {
+      res.status(404).json({ message: "Property not found" });
+      return;
+    }
+
+    if (property.managerCognitoId !== req.user?.id) {
+      res.status(403).json({ message: "You do not manage this property" });
+      return;
+    }
+
+    // Remove dependent rows first - leases, applications and payments all
+    // reference the property and block the delete otherwise.
+    await prisma.$transaction([
+      prisma.payment.deleteMany({ where: { lease: { propertyId } } }),
+      prisma.application.deleteMany({ where: { propertyId } }),
+      prisma.lease.deleteMany({ where: { propertyId } }),
+      prisma.property.delete({ where: { id: propertyId } }),
+    ]);
+
+    // Drop the location only when no other property still points at it.
+    const remainingAtLocation = await prisma.property.count({
+      where: { locationId: property.locationId },
+    });
+    if (remainingAtLocation === 0) {
+      await prisma.location.delete({ where: { id: property.locationId } });
+    }
+
+    // Photos are best effort - a failed S3 delete should not fail the request.
+    await Promise.all(
+      property.photoUrls.map(async (url) => {
+        try {
+          const key = decodeURIComponent(new URL(url).pathname.slice(1));
+          await s3Client.send(
+            new DeleteObjectCommand({
+              Bucket: process.env.S3_BUCKET_NAME!,
+              Key: key,
+            })
+          );
+        } catch (err) {
+          console.error(`Could not delete S3 object for ${url}:`, err);
+        }
+      })
+    );
+
+    res.status(200).json({ message: "Property deleted", id: propertyId });
+  } catch (error: any) {
+    console.error("deleteProperty failed:", error);
+    res
+      .status(500)
+      .json({ message: `Error deleting property: ${error.message}` });
   }
 };
