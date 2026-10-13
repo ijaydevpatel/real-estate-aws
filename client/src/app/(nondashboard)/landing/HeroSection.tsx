@@ -28,17 +28,18 @@ const HeroSection = () => {
       );
       const data = await response.json();
       if (data.features && data.features.length > 0) {
+        // Mapbox returns [longitude, latitude] and the rest of the app keeps
+        // that order. Swapping it here put every search in the Arctic.
         const [lng, lat] = data.features[0].center;
         dispatch(
           setFilters({
             location: trimmedQuery,
-            coordinates: [lat, lng],
+            coordinates: [lng, lat],
           })
         );
         const params = new URLSearchParams({
           location: trimmedQuery,
-          lat: lat.toString(),
-          lng: lng,
+          coordinates: `${lng},${lat}`,
         });
         router.push(`/search?${params.toString()}`);
       }

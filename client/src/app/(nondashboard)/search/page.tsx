@@ -34,6 +34,16 @@ const SearchPage = () => {
       {}
     );
 
+    // Older links used separate lat/lng params; fold them into coordinates.
+    if (!initialFilters.coordinates && initialFilters.lat && initialFilters.lng) {
+      initialFilters.coordinates = [
+        Number(initialFilters.lng),
+        Number(initialFilters.lat),
+      ];
+    }
+    delete initialFilters.lat;
+    delete initialFilters.lng;
+
     const cleanedFilters = cleanParams(initialFilters);
     dispatch(setFilters(cleanedFilters));
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
