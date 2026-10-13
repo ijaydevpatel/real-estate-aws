@@ -269,6 +269,14 @@ export const createProperty = async (
           typeof propertyData.highlights === "string"
             ? propertyData.highlights.split(",")
             : [],
+        contactPhone: propertyData.contactPhone || null,
+        languages:
+          typeof propertyData.languages === "string"
+            ? propertyData.languages
+                .split(",")
+                .map((l: string) => l.trim())
+                .filter(Boolean)
+            : [],
         isPetsAllowed: propertyData.isPetsAllowed === "true",
         isParkingIncluded: propertyData.isParkingIncluded === "true",
         pricePerMonth: parseFloat(propertyData.pricePerMonth),

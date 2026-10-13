@@ -23,6 +23,10 @@ export const propertySchema = z.object({
   state: z.string().min(1, "State is required"),
   country: z.string().min(1, "Country is required"),
   postalCode: z.string().min(1, "Postal code is required"),
+  contactPhone: z
+    .string()
+    .min(6, "Contact phone must be at least 6 digits"),
+  languages: z.string().min(1, "Enter at least one language"),
 });
 
 export type PropertyFormData = z.infer<typeof propertySchema>;

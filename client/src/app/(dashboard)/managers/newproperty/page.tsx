@@ -36,6 +36,8 @@ const NewProperty = () => {
       state: "",
       country: "",
       postalCode: "",
+      contactPhone: "",
+      languages: "English",
     },
   });
 
@@ -208,6 +210,18 @@ const NewProperty = () => {
               <h2 className="text-lg font-semibold mb-4">
                 Additional Information
               </h2>
+              <div className="flex justify-between gap-4">
+                <CustomFormField
+                  name="contactPhone"
+                  label="Contact Phone"
+                  className="w-full"
+                />
+                <CustomFormField
+                  name="languages"
+                  label="Languages Spoken"
+                  className="w-full"
+                />
+              </div>
               <CustomFormField name="address" label="Address" />
               <div className="flex justify-between gap-4">
                 <CustomFormField name="city" label="City" className="w-full" />

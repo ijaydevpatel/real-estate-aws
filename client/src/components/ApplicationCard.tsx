@@ -21,6 +21,13 @@ const ApplicationCard = ({
   const contactPerson =
     userType === "manager" ? application.tenant : application.manager;
 
+  // Managers should see the number the tenant gave on this application, not
+  // whatever is on the tenant's profile, which may never have been filled in.
+  const contactPhone =
+    userType === "manager"
+      ? application.phoneNumber || contactPerson.phoneNumber
+      : contactPerson.phoneNumber;
+
   return (
     <div className="border rounded-xl overflow-hidden shadow-sm bg-white mb-4">
       <div className="flex flex-col lg:flex-row  items-start lg:items-center justify-between px-6 md:px-4 py-6 gap-6 lg:gap-4">
@@ -107,7 +114,7 @@ const ApplicationCard = ({
               <div className="font-semibold">{contactPerson.name}</div>
               <div className="text-sm flex items-center text-primary-600">
                 <PhoneCall className="w-5 h-5 mr-2" />
-                {contactPerson.phoneNumber}
+                {contactPhone || "Not provided"}
               </div>
               <div className="text-sm flex items-center text-primary-600">
                 <Mail className="w-5 h-5 mr-2" />

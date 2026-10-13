@@ -29,7 +29,10 @@ const SingleListing = () => {
         </div>
 
         <div className="order-1 md:order-2">
-          <ContactWidget onOpenModal={() => setIsModalOpen(true)} />
+          <ContactWidget
+            propertyId={propertyId}
+            onOpenModal={() => setIsModalOpen(true)}
+          />
         </div>
       </div>
 
