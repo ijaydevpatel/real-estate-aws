@@ -172,19 +172,19 @@ const NewProperty = () => {
                 <CustomFormField
                   name="amenities"
                   label="Amenities"
-                  type="select"
+                  type="multi-checkbox"
                   options={Object.keys(AmenityEnum).map((amenity) => ({
                     value: amenity,
-                    label: amenity,
+                    label: amenity.replace(/([A-Z])/g, " $1").trim(),
                   }))}
                 />
                 <CustomFormField
                   name="highlights"
                   label="Highlights"
-                  type="select"
+                  type="multi-checkbox"
                   options={Object.keys(HighlightEnum).map((highlight) => ({
                     value: highlight,
-                    label: highlight,
+                    label: highlight.replace(/([A-Z])/g, " $1").trim(),
                   }))}
                 />
               </div>

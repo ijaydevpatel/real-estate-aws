@@ -45,7 +45,8 @@ interface FormFieldProps {
     | "switch"
     | "password"
     | "file"
-    | "multi-input";
+    | "multi-input"
+    | "multi-checkbox";
   placeholder?: string;
   options?: { value: string; label: string }[];
   accept?: string;
@@ -151,6 +152,45 @@ export const CustomFormField: React.FC<FormFieldProps> = ({
             disabled={disabled}
           />
         );
+      case "multi-checkbox": {
+        // Stored as a comma separated string so the API contract is unchanged.
+        const selected: string[] = field.value
+          ? String(field.value).split(",").filter(Boolean)
+          : [];
+
+        const toggle = (option: string) => {
+          const next = selected.includes(option)
+            ? selected.filter((v) => v !== option)
+            : [...selected, option];
+          field.onChange(next.join(","));
+        };
+
+        return (
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            {options?.map((option) => {
+              const isChecked = selected.includes(option.value);
+              return (
+                <label
+                  key={option.value}
+                  className={`flex items-center gap-2 rounded-md border p-2 text-sm cursor-pointer transition-colors ${
+                    isChecked
+                      ? "border-primary-700 bg-primary-50"
+                      : "border-gray-200 hover:bg-gray-50"
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={isChecked}
+                    onChange={() => toggle(option.value)}
+                    className="h-4 w-4 accent-primary-700"
+                  />
+                  <span>{option.label}</span>
+                </label>
+              );
+            })}
+          </div>
+        );
+      }
       case "multi-input":
         return (
           <MultiInputField
