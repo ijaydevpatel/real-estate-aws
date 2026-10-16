@@ -1,0 +1,94 @@
+{
+  "info": {
+    "name": "Rentiful - INFS803 Group 27",
+    "description": "REST API for the Rentiful rental platform. Set the token variable to a Cognito idToken taken from the deployed web client (developer tools, Application tab, Local Storage, or the Authorization header on any request in the Network tab). The gateway requires that token on every path except GET /properties.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "https://v21n5cn723.execute-api.us-east-1.amazonaws.com/prod" },
+    { "key": "token", "value": "" },
+    { "key": "tenantCognitoId", "value": "" },
+    { "key": "managerCognitoId", "value": "" },
+    { "key": "propertyId", "value": "14" },
+    { "key": "leaseId", "value": "1" }
+  ],
+  "auth": { "type": "bearer", "bearer": [ { "key": "token", "value": "{{token}}" } ] },
+  "item": [
+    { "name": "Public", "item": [
+      { "name": "GET /properties (no token)", "request": { "auth": { "type": "noauth" }, "method": "GET", "url": "{{baseUrl}}/properties" } },
+      { "name": "GET /properties filtered", "request": { "auth": { "type": "noauth" }, "method": "GET", "url": "{{baseUrl}}/properties?priceMin=1000&beds=2" } }
+    ]},
+    { "name": "Properties", "item": [
+      { "name": "GET /properties/:id", "request": { "method": "GET", "url": "{{baseUrl}}/properties/{{propertyId}}" } },
+      { "name": "GET agreement template", "request": { "method": "GET", "url": "{{baseUrl}}/properties/{{propertyId}}/agreement-template" } },
+      { "name": "GET property leases", "request": { "method": "GET", "url": "{{baseUrl}}/properties/{{propertyId}}/leases" } },
+      { "name": "POST /properties (manager, multipart)", "request": { "method": "POST", "url": "{{baseUrl}}/properties",
+        "body": { "mode": "formdata", "formdata": [
+          { "key": "name", "value": "Test listing", "type": "text" },
+          { "key": "description", "value": "Created from Postman", "type": "text" },
+          { "key": "pricePerMonth", "value": "1000", "type": "text" },
+          { "key": "securityDeposit", "value": "500", "type": "text" },
+          { "key": "applicationFee", "value": "100", "type": "text" },
+          { "key": "beds", "value": "1", "type": "text" },
+          { "key": "baths", "value": "1", "type": "text" },
+          { "key": "squareFeet", "value": "1000", "type": "text" },
+          { "key": "propertyType", "value": "Apartment", "type": "text" },
+          { "key": "address", "value": "121 Mayoral Drive", "type": "text" },
+          { "key": "city", "value": "Auckland", "type": "text" },
+          { "key": "state", "value": "Auckland", "type": "text" },
+          { "key": "country", "value": "New Zealand", "type": "text" },
+          { "key": "postalCode", "value": "1010", "type": "text" },
+          { "key": "managerCognitoId", "value": "{{managerCognitoId}}", "type": "text" },
+          { "key": "photos", "type": "file", "src": [] },
+          { "key": "agreementTemplate", "type": "file", "src": [] }
+        ] } } },
+      { "name": "DELETE /properties/:id (owner only)", "request": { "method": "DELETE", "url": "{{baseUrl}}/properties/{{propertyId}}" } }
+    ]},
+    { "name": "Applications", "item": [
+      { "name": "GET /applications", "request": { "method": "GET", "url": "{{baseUrl}}/applications?userId={{tenantCognitoId}}&userType=tenant" } },
+      { "name": "POST /applications", "request": { "method": "POST", "url": "{{baseUrl}}/applications",
+        "header": [ { "key": "Content-Type", "value": "application/json" } ],
+        "body": { "mode": "raw", "raw": "{\n  \"propertyId\": {{propertyId}},\n  \"tenantCognitoId\": \"{{tenantCognitoId}}\",\n  \"name\": \"Test Tenant\",\n  \"email\": \"tenant@example.com\",\n  \"phoneNumber\": \"0211234567\",\n  \"message\": \"Submitted from Postman\"\n}" } } },
+      { "name": "PUT /applications/:id/status", "request": { "method": "PUT", "url": "{{baseUrl}}/applications/1/status",
+        "header": [ { "key": "Content-Type", "value": "application/json" } ],
+        "body": { "mode": "raw", "raw": "{ \"status\": \"Approved\" }" } } }
+    ]},
+    { "name": "Leases", "item": [
+      { "name": "GET /leases", "request": { "method": "GET", "url": "{{baseUrl}}/leases" } },
+      { "name": "GET lease payments", "request": { "method": "GET", "url": "{{baseUrl}}/leases/{{leaseId}}/payments" } },
+      { "name": "GET signed agreement link", "request": { "method": "GET", "url": "{{baseUrl}}/leases/{{leaseId}}/agreement" } },
+      { "name": "POST signed agreement", "request": { "method": "POST", "url": "{{baseUrl}}/leases/{{leaseId}}/agreement",
+        "body": { "mode": "formdata", "formdata": [ { "key": "agreement", "type": "file", "src": [] } ] } } },
+      { "name": "GET all receipts (zip)", "request": { "method": "GET", "url": "{{baseUrl}}/leases/{{leaseId}}/receipts" } },
+      { "name": "GET one receipt (pdf)", "request": { "method": "GET", "url": "{{baseUrl}}/leases/{{leaseId}}/payments/1/receipt" } }
+    ]},
+    { "name": "Tenants", "item": [
+      { "name": "GET tenant profile", "request": { "method": "GET", "url": "{{baseUrl}}/tenants/{{tenantCognitoId}}" } },
+      { "name": "POST /tenants", "request": { "method": "POST", "url": "{{baseUrl}}/tenants",
+        "header": [ { "key": "Content-Type", "value": "application/json" } ],
+        "body": { "mode": "raw", "raw": "{\n  \"cognitoId\": \"{{tenantCognitoId}}\",\n  \"name\": \"Test Tenant\",\n  \"email\": \"tenant@example.com\",\n  \"phoneNumber\": \"0211234567\"\n}" } } },
+      { "name": "PUT tenant profile", "request": { "method": "PUT", "url": "{{baseUrl}}/tenants/{{tenantCognitoId}}",
+        "header": [ { "key": "Content-Type", "value": "application/json" } ],
+        "body": { "mode": "raw", "raw": "{ \"name\": \"Test Tenant\", \"email\": \"tenant@example.com\", \"phoneNumber\": \"0217654321\" }" } } },
+      { "name": "GET current residences", "request": { "method": "GET", "url": "{{baseUrl}}/tenants/{{tenantCognitoId}}/current-residences" } },
+      { "name": "POST favourite", "request": { "method": "POST", "url": "{{baseUrl}}/tenants/{{tenantCognitoId}}/favorites/{{propertyId}}" } },
+      { "name": "DELETE favourite", "request": { "method": "DELETE", "url": "{{baseUrl}}/tenants/{{tenantCognitoId}}/favorites/{{propertyId}}" } },
+      { "name": "GET payment method", "request": { "method": "GET", "url": "{{baseUrl}}/tenants/{{tenantCognitoId}}/payment-method" } },
+      { "name": "PUT payment method", "request": { "method": "PUT", "url": "{{baseUrl}}/tenants/{{tenantCognitoId}}/payment-method",
+        "header": [ { "key": "Content-Type", "value": "application/json" } ],
+        "body": { "mode": "raw", "raw": "{ \"cardBrand\": \"Amex\", \"last4\": \"1234\", \"expiryMonth\": 10, \"expiryYear\": 2029, \"billingEmail\": \"tenant@example.com\" }" } } },
+      { "name": "403 check: another tenant's payment method", "request": { "method": "GET", "url": "{{baseUrl}}/tenants/someone-elses-cognito-id/payment-method" },
+        "description": "Expected: 403. A valid tenant token with the correct role is still refused, because the handler compares the record owner against the token." }
+    ]},
+    { "name": "Managers", "item": [
+      { "name": "GET manager profile", "request": { "method": "GET", "url": "{{baseUrl}}/managers/{{managerCognitoId}}" } },
+      { "name": "POST /managers", "request": { "method": "POST", "url": "{{baseUrl}}/managers",
+        "header": [ { "key": "Content-Type", "value": "application/json" } ],
+        "body": { "mode": "raw", "raw": "{\n  \"cognitoId\": \"{{managerCognitoId}}\",\n  \"name\": \"Test Manager\",\n  \"email\": \"manager@example.com\",\n  \"phoneNumber\": \"0219876543\"\n}" } } },
+      { "name": "PUT manager profile", "request": { "method": "PUT", "url": "{{baseUrl}}/managers/{{managerCognitoId}}",
+        "header": [ { "key": "Content-Type", "value": "application/json" } ],
+        "body": { "mode": "raw", "raw": "{ \"name\": \"Test Manager\", \"email\": \"manager@example.com\", \"phoneNumber\": \"0219876543\" }" } } },
+      { "name": "GET manager properties", "request": { "method": "GET", "url": "{{baseUrl}}/managers/{{managerCognitoId}}/properties" } }
+    ]}
+  ]
+}
